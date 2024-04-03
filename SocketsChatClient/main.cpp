@@ -1,4 +1,4 @@
-#include <iostream>
+  #include <iostream>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <inaddr.h>
@@ -12,6 +12,7 @@ using namespace std;
 
 int main(void)
 {
+	system("chcp 1251");
 	const char SERVER_IP[] = "127.0.0.1";					
 	const short SERVER_PORT_NUM = 5555;				
 	const short BUFF_SIZE = 1024;				
@@ -26,23 +27,23 @@ int main(void)
 	erStat = WSAStartup(MAKEWORD(2, 2), &wsData);
 
 	if (erStat != 0) {
-		cout << "Error WinSock version initializaion #";
+		cout << "Ошибка: Неудачная инициализация версии WinSock : ";
 		cout << WSAGetLastError();
 		return 1;
 	}
 	else
-		cout << "WinSock initialization is OK" << endl;
+		cout << "Библиотеки WinSock инициализированны успешно" << endl;
 
 
 	SOCKET ClientSock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (ClientSock == INVALID_SOCKET) {
-		cout << "Error initialization socket # " << WSAGetLastError() << endl;
+		cout << "Ошибка: Неуспешное создание сокета : " << WSAGetLastError() << endl;
 		closesocket(ClientSock);
 		WSACleanup();
 	}
 	else
-		cout << "Client socket initialization is OK" << endl;
+		cout << "Сокет успешно создан" << endl;
 
 
 	sockaddr_in servInfo;
@@ -52,17 +53,23 @@ int main(void)
 	servInfo.sin_family = AF_INET;
 	servInfo.sin_addr = ip_to_num;
 	servInfo.sin_port = htons(SERVER_PORT_NUM);
-
+	
 	erStat = connect(ClientSock, (sockaddr*)&servInfo, sizeof(servInfo));
 
 	if (erStat != 0) {
-		cout << "Connection to Server is FAILED. Error # " << WSAGetLastError() << endl;
+		cout << "Ошибка : неуспешное соединение с сервером : " << WSAGetLastError() << endl;
 		closesocket(ClientSock);
 		WSACleanup();
 		return 1;
 	}
-	else
-		cout << "Connection established SUCCESSFULLY. Ready to send a message to Server" << endl;
+	else {
+		char serverIP[22];
+
+		inet_ntop(AF_INET, &servInfo.sin_addr, serverIP, INET_ADDRSTRLEN);
+	
+		cout << "Соединение с сервером по IP = " << serverIP << " порт = " << SERVER_PORT_NUM << " создано успешно" << endl;
+	}
+		
 
 
 
@@ -71,7 +78,7 @@ int main(void)
 
 	while (true) {
 
-		cout << "Your (Client) message to Server: ";
+		cout << "Ваше сообщение: ";
 		fgets(clientBuff.data(), clientBuff.size(), stdin);
 
 		if (clientBuff[0] == 'x' && clientBuff[1] == 'x' && clientBuff[2] == 'x') {
@@ -84,7 +91,7 @@ int main(void)
 		packet_size = send(ClientSock, clientBuff.data(), clientBuff.size(), 0);
 
 		if (packet_size == SOCKET_ERROR) {
-			cout << "Can't send message to Server. Error # " << WSAGetLastError() << endl;
+			cout << "Ошибка : Не удалось отпрвить сообщение на сервер : " << WSAGetLastError() << endl;
 			closesocket(ClientSock);
 			WSACleanup();
 			return 1;
@@ -93,13 +100,13 @@ int main(void)
 		packet_size = recv(ClientSock, servBuff.data(), servBuff.size(), 0);
 
 		if (packet_size == SOCKET_ERROR) {
-			cout << "Can't receive message from Server. Error # " << WSAGetLastError() << endl;
+			cout << "Ошибка : Не удалось принять сообщение от сервера : # " << WSAGetLastError() << endl;
 			closesocket(ClientSock);
 			WSACleanup();
 			return 1;
 		}
 		else
-			cout << "Server message: " << servBuff.data() << endl;
+			cout << "Сообщение сервера: " << servBuff.data() << endl;
 
 	}
 
